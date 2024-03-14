@@ -16,13 +16,13 @@ def send_tcp(target_ip, target_port, rule):
     tcp_packet = IP(dst=target_ip) / TCP(dport=target_port, flags="S")
     send(tcp_packet)
 
-    sniff(filter=f"tcp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, arg1=rule)), timeout=2)
+    sniff(filter=f"tcp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, rule=rule)), timeout=2)
 
 def send_udp(target_ip, target_port, rule):
     udp_packet = IP(dst=target_ip) / UDP(dport=target_port)
     send(udp_packet)
 
-    sniff(filter=f"udp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, arg1=rule)), timeout=2)
+    sniff(filter=f"udp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, rule=rule)), timeout=2)
 
 
 def send_icmp(target_ip, rule):
