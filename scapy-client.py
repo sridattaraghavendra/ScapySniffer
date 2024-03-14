@@ -115,8 +115,8 @@ def send_packet(config, destination):
         print(f"Allowed Port Range: {rule['from_port']}-{rule['to_port']}")
         for port in range(rule['from_port'], rule['to_port'] + 1):
             send_tcp(destination, port, rule)
-            #send_udp(destination, port, rule)
-            #send_icmp(destination, rule)
+            send_udp(destination, port, rule)
+            send_icmp(destination, rule)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
