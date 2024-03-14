@@ -4,18 +4,21 @@ import sys
 import json
 import csv
 from datetime import datetime
+import netifaces
 
 def read_port_info():
     with open('server_ports.json', 'r') as f:
         config = json.load(f)
     return config
 
-def get_ip_address():
+def get_ip_address(interface_name):
     try:
-        ip_address = socket.gethostbyname(socket.gethostname())
-        return ip_address
-    except socket.error as e:
-        print("Error occurred while getting IP address:", e)
+        # Get the addresses of the specified interface
+        addresses = netifaces.ifaddresses(interface_name)
+        # Extract and return the IPv4 address
+        ipv4_address = addresses[netifaces.AF_INET][0]['addr']
+        return ipv4_address
+    except (KeyError, ValueError):
         return None
     
 
@@ -92,7 +95,7 @@ if __name__ == "__main__":
         sys.exit(1)
     interface_name = sys.argv[1]
     src_ip = sys.argv[2]
-    host = get_ip_address()
+    host = get_ip_address(interface_name)
     print(f"Server IP: {host}")
     ports = read_port_info()["ports"]
     start_server(ports, src_ip, host)
