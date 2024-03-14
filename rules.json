@@ -1,0 +1,32 @@
+{
+    "firewall_rules":[
+        {
+            "name":"Allow SSH",
+            "description":"Allow SSH",
+            "ip_protocol":"tcp",
+            "from_port":22,
+            "to_port":22
+        },
+        {
+            "name":"Allow HTTP",
+            "description":"Allow HTTP",
+            "ip_protocol":"tcp",
+            "from_port":80,
+            "to_port":80
+        },
+        {
+            "name":"Allow Custom",
+            "description":"Allow Custom Port",
+            "ip_protocol":"tcp",
+            "from_port":2222,
+            "to_port":2222
+        },
+        {
+            "name":"Allow Custom",
+            "description":"Allow Custom Port",
+            "ip_protocol":"tcp",
+            "from_port":4444,
+            "to_port":4444
+        }
+    ]
+}
