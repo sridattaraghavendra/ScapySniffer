@@ -31,6 +31,7 @@ def send_udp(target_ip, target_port, rule):
 
     # sniff(filter=f"udp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, rule=rule)), timeout=2)
     reply = sr(udp_packet,timeout=10)
+    print(reply[0].res)
     handle_response_blocking(reply[0].res[0].answer, rule, udp_packet)
 
 
