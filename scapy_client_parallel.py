@@ -51,13 +51,13 @@ def handle_response_blocking(packet, rule, sent_packet):
     if packet is None:
         match_rule_to_no_response(rule, sent_packet)
     else:
-        if packet.haslayer(TCP):
+        if packet.haslayer(TCP) and packet[TCP].flags & 0x12:
             print("Received TCP reply from", packet[IP].src)
             match_rule_to_reply(packet, rule)
         elif packet.haslayer(UDP):
             print("Received UDP reply from", packet[IP].src)
             match_rule_to_reply(packet, rule)
-        elif packet.haslayer(ICMP):
+        elif packet.haslayer(ICMP) and packet[ICMP].type == 0:
             print("Received ICMP reply from", packet[IP].src)
             match_rule_to_reply(packet, rule)
         else:
