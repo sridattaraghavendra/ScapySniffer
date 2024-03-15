@@ -140,6 +140,8 @@ def send_packet(config, max_ports, destination):
     print(f"Sending packet to {destination}")
     send_icmp(destination, config)
     send_udp(destination,53,config)
+    send_udp(destination,80,config)
+    send_udp(destination,20,config)
     # with ThreadPoolExecutor(max_workers=50) as executor:
     #     for port in range(1, max_ports + 1, 50):
     #         print(f"Checking ports: {port}-{min(port+49, max_ports+1)}")
