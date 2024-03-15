@@ -14,14 +14,8 @@ def read_config():
 def send_tcp(target_ip, target_port, rule):
     print(target_ip, target_port, rule)    
     tcp_packet = IP(dst=target_ip) / TCP(dport=target_port, flags="S")
-    # send(tcp_packet)
 
-    # sniff(filter=f"tcp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, rule=rule)), timeout=2)
     reply = sr(tcp_packet,timeout=10)
-    # print("Reply: ", reply)
-    # sent, received = reply[0]
-    # print("Sent: ", sent)
-    # print("Received: ", received)
     if(len(reply[0].res) > 0):
         handle_response_blocking(reply[0].res[0].answer, rule, tcp_packet)
     else:
@@ -30,9 +24,7 @@ def send_tcp(target_ip, target_port, rule):
 
 def send_udp(target_ip, target_port, rule):
     udp_packet = IP(dst=target_ip) / UDP(dport=target_port)
-    # send(udp_packet)
 
-    # sniff(filter=f"udp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, rule=rule)), timeout=2)
     reply = sr(udp_packet,timeout=10)
     if(len(reply[0].res) > 0):
         handle_response_blocking(reply[0].res[0].answer, rule, udp_packet)
@@ -41,22 +33,12 @@ def send_udp(target_ip, target_port, rule):
 
 def send_icmp(target_ip, rule):
     icmp_packet = IP(dst=target_ip) / ICMP()
-    # send(icmp_packet)
     
-    # sniff(filter=f"icmp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, arg1=rule)), timeout=2)
     reply = sr(icmp_packet,timeout=10)
     if(len(reply[0].res) > 0):
         handle_response_blocking(reply[0].res[0].answer, rule, icmp_packet)
     else:
         handle_response_blocking(None, rule, icmp_packet)
-
-    #print("ICMP response : ",ans.show())
-    #print("Unanswered : ",unans.show())
-    # if response and isinstance(response, list) and len(response) > 0:
-    #     response_pkt = response[0][1]
-    #     handle_response_blocking(response_pkt, rule, icmp_packet)
-    # else:
-    #     print("No response received")
 
 
 def handle_response_blocking(packet, rule, sent_packet):
@@ -76,23 +58,6 @@ def handle_response_blocking(packet, rule, sent_packet):
         else:
             print("No expected reply received")
             match_rule_to_no_response(rule, sent_packet)
-
-# def handle_response(callback, *args, **kwargs):
-#     def wrapper(packet):
-#         if packet.haslayer(TCP) and packet[TCP].flags & 0x12:
-#             print("Received TCP SYN-ACK reply from", packet[IP].src)
-#             callback(packet, *args, **kwargs)
-#         elif packet.haslayer(UDP):
-#             print("Received UDP reply from", packet[IP].src)
-#             callback(packet, *args, **kwargs)
-#         elif packet.haslayer(ICMP):
-#             print("Received ICMP reply from", packet[IP].src)
-#             callback(packet, *args, **kwargs)
-#         else:
-#             print("No expected reply received")
-#             match_rule_to_no_response(*args)
-
-#     return wrapper
 
 def match_rule_to_reply(packet,rule):
     print(f"Response for rule: {rule['name']}")
@@ -169,7 +134,7 @@ def send_packet(config, destination):
         for port in range(rule['from_port'], rule['to_port'] + 1):
             send_tcp(destination, port, rule)
             send_udp(destination, port, rule)
-            #send_icmp(destination, rule)
+            send_icmp(destination, rule)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
