@@ -14,70 +14,70 @@ def read_config():
 def send_tcp(target_ip, target_port, rule):
     print(target_ip, target_port, rule)    
     tcp_packet = IP(dst=target_ip) / TCP(dport=target_port, flags="S")
-    send(tcp_packet)
+    # send(tcp_packet)
 
-    sniff(filter=f"tcp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, rule=rule)), timeout=2)
+    # sniff(filter=f"tcp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, rule=rule)), timeout=2)
+    response = sr(tcp_packet,timeout=10)
+    handle_response_blocking(response, rule, tcp_packet)
 
 def send_udp(target_ip, target_port, rule):
     udp_packet = IP(dst=target_ip) / UDP(dport=target_port)
-    send(udp_packet)
+    # send(udp_packet)
 
-    sniff(filter=f"udp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, rule=rule)), timeout=2)
+    # sniff(filter=f"udp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, rule=rule)), timeout=2)
+    response = sr(udp_packet,timeout=10)
+    handle_response_blocking(response, rule, udp_packet)
 
 
 def send_icmp(target_ip, rule):
     icmp_packet = IP(dst=target_ip) / ICMP()
-    send(icmp_packet)
+    # send(icmp_packet)
     
-    sniff(filter=f"icmp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, arg1=rule)), timeout=2)
+    # sniff(filter=f"icmp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, arg1=rule)), timeout=2)
+    response = sr(icmp_packet,timeout=10)
+    handle_response_blocking(response, rule, icmp_packet)
 
 
-def handle_response(callback, *args, **kwargs):
-    def wrapper(packet):
-        if packet.haslayer(TCP) and packet[TCP].flags & 0x12:  # Check if packet is TCP SYN-ACK
+def handle_response_blocking(packet, rule, sent_packet):
+    if packet is None:
+        print("No expected reply received")
+        match_rule_to_no_response(rule, sent_packet)
+    else:
+        if packet.haslayer(TCP) and packet[TCP].flags & 0x12:
             print("Received TCP SYN-ACK reply from", packet[IP].src)
-            # Call the callback function if a TCP reply is received
-            callback(packet, *args, **kwargs)
+            match_rule_to_reply(packet, rule)
         elif packet.haslayer(UDP):
             print("Received UDP reply from", packet[IP].src)
-            # Call the callback function if a UDP reply is received
-            callback(packet, *args, **kwargs)
+            match_rule_to_reply(packet, rule)
         elif packet.haslayer(ICMP):
             print("Received ICMP reply from", packet[IP].src)
-            # Call the callback function if an ICMP reply is received
-            callback(packet, *args, **kwargs)
+            match_rule_to_reply(packet, rule)
         else:
             print("No expected reply received")
-            # Call another function if no expected reply is received
-            match_rule_to_no_response(*args)
+            match_rule_to_no_response(rule, sent_packet)
 
-    return wrapper
+# def handle_response(callback, *args, **kwargs):
+#     def wrapper(packet):
+#         if packet.haslayer(TCP) and packet[TCP].flags & 0x12:
+#             print("Received TCP SYN-ACK reply from", packet[IP].src)
+#             callback(packet, *args, **kwargs)
+#         elif packet.haslayer(UDP):
+#             print("Received UDP reply from", packet[IP].src)
+#             callback(packet, *args, **kwargs)
+#         elif packet.haslayer(ICMP):
+#             print("Received ICMP reply from", packet[IP].src)
+#             callback(packet, *args, **kwargs)
+#         else:
+#             print("No expected reply received")
+#             match_rule_to_no_response(*args)
+
+#     return wrapper
 
 def match_rule_to_reply(packet,rule):
     print(f"Response for rule: {rule['name']}")
 
-    packet_details = {
-        "timestamp": str(datetime.now()),
-        "source_ip": packet[IP].src,
-        "destination_ip": packet[IP].dst,
-        "protocol": packet[IP].proto,
-        "packet_length": len(packet),
-        # Add more fields as needed
-    }
-
-    if packet.haslayer(ICMP):
-        packet_details["icmp_type"] = packet[ICMP].type
-        packet_details["icmp_code"] = packet[ICMP].code
-
-    elif packet.haslayer(UDP):
-        packet_details["udp_source_port"] = packet[UDP].sport
-        packet_details["udp_destination_port"] = packet[UDP].dport
-
-    elif packet.haslayer(TCP):
-        packet_details["tcp_source_port"] = packet[TCP].sport
-        packet_details["tcp_destination_port"] = packet[TCP].dport
-        packet_details["tcp_flags"] = packet[TCP].flags
-
+    packet_details = packet_to_object(packet)
+    
     if(packet_details["protocol"] == 6 and rule["ip_protocol"] == "tcp"):
         packet_details["Test Result"] = "Passed"
     elif(packet_details["protocol"] == 17 and rule["ip_protocol"] == "udp"):
@@ -90,12 +90,10 @@ def match_rule_to_reply(packet,rule):
     write_to_csv(packet_details)
 
     
-def match_rule_to_no_response(rule):
+def match_rule_to_no_response(rule, packet):
     print(f"No response for rule: {rule['name']}")
 
-    packet_details = {
-        "timestamp": str(datetime.now())
-    }
+    packet_details = packet_to_object(packet)
     
     if(packet_details["protocol"] == 6 and rule["ip_protocol"] == "tcp"):
         packet_details["Test Result"] = "Failed"
@@ -111,9 +109,35 @@ def match_rule_to_no_response(rule):
 def write_to_csv(packet_details):
     with open("test_results.csv", "a", newline="") as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=packet_details.keys())
-        if csv_file.tell() == 0:  # Check if file is empty, write headers if needed
+        if csv_file.tell() == 0:
             writer.writeheader()
         writer.writerow(packet_details)
+
+
+def packet_to_object(packet):
+    packet_details = {
+        "timestamp": str(datetime.now()),
+        "source_ip": packet[IP].src,
+        "destination_ip": packet[IP].dst,
+        "protocol": packet[IP].proto,
+        "packet_length": len(packet)
+    }
+
+    if packet.haslayer(ICMP):
+        packet_details["icmp_type"] = packet[ICMP].type
+        packet_details["icmp_code"] = packet[ICMP].code
+
+    elif packet.haslayer(UDP):
+        packet_details["udp_source_port"] = packet[UDP].sport
+        packet_details["udp_destination_port"] = packet[UDP].dport
+
+    elif packet.haslayer(TCP):
+        packet_details["tcp_source_port"] = packet[TCP].sport
+        packet_details["tcp_destination_port"] = packet[TCP].dport
+        packet_details["tcp_flags"] = packet[TCP].flags
+
+    return packet_details
+
 
 def send_packet(config, destination):
     print(f"Sending packet to {destination}")
