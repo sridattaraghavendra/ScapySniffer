@@ -18,7 +18,13 @@ def send_tcp(target_ip, target_port, rule):
 
     # sniff(filter=f"tcp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, rule=rule)), timeout=2)
     response = sr(tcp_packet,timeout=10)
-    handle_response_blocking(response, rule, tcp_packet)
+    print("TCP response : " ,response)
+    if response and isinstance(response, list) and len(response) > 0:
+        response_pkt = response[0][1]
+        handle_response_blocking(response_pkt, rule, tcp_packet)
+    else:
+        print("No response received")
+
 
 def send_udp(target_ip, target_port, rule):
     udp_packet = IP(dst=target_ip) / UDP(dport=target_port)
@@ -26,7 +32,12 @@ def send_udp(target_ip, target_port, rule):
 
     # sniff(filter=f"udp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, rule=rule)), timeout=2)
     response = sr(udp_packet,timeout=10)
-    handle_response_blocking(response, rule, udp_packet)
+    print("UDP response : " ,response)
+    if response and isinstance(response, list) and len(response) > 0:
+        response_pkt = response[0][1]
+        handle_response_blocking(response_pkt, rule, udp_packet)
+    else:
+        print("No response received")
 
 
 def send_icmp(target_ip, rule):
@@ -35,7 +46,12 @@ def send_icmp(target_ip, rule):
     
     # sniff(filter=f"icmp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, arg1=rule)), timeout=2)
     response = sr(icmp_packet,timeout=10)
-    handle_response_blocking(response, rule, icmp_packet)
+    print("ICMP response : " ,response)
+    if response and isinstance(response, list) and len(response) > 0:
+        response_pkt = response[0][1]
+        handle_response_blocking(response_pkt, rule, icmp_packet)
+    else:
+        print("No response received")
 
 
 def handle_response_blocking(packet, rule, sent_packet):
@@ -141,7 +157,6 @@ def packet_to_object(packet):
 
 def send_packet(config, destination):
     print(f"Sending packet to {destination}")
-    print(config['firewall_rules'])
     for rule in config['firewall_rules']:
         print(f'Checking rule: {rule["name"]}')
         print(f"Allowed Protocol: {rule['ip_protocol']}")
@@ -157,5 +172,4 @@ if __name__ == "__main__":
         sys.exit(1)
     destination = sys.argv[1]
     config = read_config()
-    print(config)
     send_packet(config,destination)
