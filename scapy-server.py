@@ -87,7 +87,7 @@ def handle_icmp(packet):
 def start_server(ports, src_ip, host):
     print("Started server on", host, "on ports", ports)
     for port in ports:
-        sniff(filter=f"(tcp or udp or icmp) and not src host {host} and port {port} and host {src_ip}", prn=handle_packet, iface=interface_name, store=0)
+        sniff(filter=f"(tcp or udp or icmp) and port {port} and host {src_ip} and not src host {host}", prn=handle_packet, iface=interface_name, store=0)
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:

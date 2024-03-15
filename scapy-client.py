@@ -17,13 +17,14 @@ def send_tcp(target_ip, target_port, rule):
     # send(tcp_packet)
 
     # sniff(filter=f"tcp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, rule=rule)), timeout=2)
-    response = sr(tcp_packet,timeout=10)
-    print("TCP response : " ,response)
-    if response and isinstance(response, list) and len(response) > 0:
-        response_pkt = response[0][1]
-        handle_response_blocking(response_pkt, rule, tcp_packet)
-    else:
-        print("No response received")
+    ans, unans = sr(tcp_packet,timeout=10)
+    print("TCP response : " ,ans)
+    print("Unanswered : " ,unans)
+    # if response and isinstance(response, list) and len(response) > 0:
+    #     response_pkt = response[0][1]
+    #     handle_response_blocking(response_pkt, rule, tcp_packet)
+    # else:
+    #     print("No response received")
 
 
 def send_udp(target_ip, target_port, rule):
@@ -163,8 +164,8 @@ def send_packet(config, destination):
         print(f"Allowed Port Range: {rule['from_port']}-{rule['to_port']}")
         for port in range(rule['from_port'], rule['to_port'] + 1):
             send_tcp(destination, port, rule)
-            send_udp(destination, port, rule)
-            send_icmp(destination, rule)
+            #send_udp(destination, port, rule)
+            #send_icmp(destination, rule)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
