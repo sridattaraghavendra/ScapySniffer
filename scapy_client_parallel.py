@@ -22,7 +22,7 @@ def send_tcp(target_ip, target_port, config):
     else:
         handle_response_blocking(None, rule, tcp_packet)
 
-def send_udp(target_ip, target_port, rule):
+def send_udp(target_ip, target_port, config):
     udp_packet = IP(dst=target_ip) / UDP(dport=target_port)
 
     rule = filter_rule(config, "udp", target_port)
@@ -32,7 +32,7 @@ def send_udp(target_ip, target_port, rule):
     else:
         handle_response_blocking(None, rule, udp_packet)
 
-def send_icmp(target_ip, rule):
+def send_icmp(target_ip, config):
     icmp_packet = IP(dst=target_ip) / ICMP()
 
     rule = filter_rule(config, "icmp", None)
@@ -139,15 +139,16 @@ def packet_to_object(packet):
 def send_packet(config, max_ports, destination):
     print(f"Sending packet to {destination}")
     send_icmp(destination, config)
-    with ThreadPoolExecutor(max_workers=50) as executor:
-        for port in range(1, max_ports + 1, 50):
-            print(f"Checking ports: {port}-{min(port+49, max_ports+1)}")
-            futures = []
-            for p in range(port, min(port+50, 65536)):
-                #futures.append(executor.submit(send_tcp, destination, p, config))
-                futures.append(executor.submit(send_udp, destination, p, config))
-            for future in futures:
-                future.result()
+    send_udp(destination,53,config)
+    # with ThreadPoolExecutor(max_workers=50) as executor:
+    #     for port in range(1, max_ports + 1, 50):
+    #         print(f"Checking ports: {port}-{min(port+49, max_ports+1)}")
+    #         futures = []
+    #         for p in range(port, min(port+50, 65536)):
+    #             #futures.append(executor.submit(send_tcp, destination, p, config))
+    #             futures.append(executor.submit(send_udp, destination, p, config))
+    #         for future in futures:
+    #             future.result()
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
