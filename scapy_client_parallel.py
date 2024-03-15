@@ -4,6 +4,11 @@ import json
 import csv
 from concurrent.futures import ThreadPoolExecutor
 
+
+fnull = open(os.devnull, 'w')
+sys.stdout = fnull
+sys.stderr = fnull
+
 def read_config():
     with open('rules.json', 'r') as f:
         config = json.load(f)
