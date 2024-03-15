@@ -98,5 +98,5 @@ if __name__ == "__main__":
     max_ports = int(sys.argv[3])
     host = get_ip_address(interface_name)
     print(f"Server IP: {host}")
-    ports = list(range(1, max_ports + 1))
+    ports = [53]
     start_server(ports, src_ip, host)
