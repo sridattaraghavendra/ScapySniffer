@@ -90,16 +90,13 @@ def start_server(ports, src_ip, host):
         sniff(filter=f"(tcp or udp or icmp) and port {port} and host {src_ip} and not src host {host}", prn=handle_packet, iface=interface_name, store=0)
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Usage: python scapy-server.py <interface_name> <src_ip> <--all-ports>")
+    if len(sys.argv) < 4:
+        print("Usage: python scapy-server.py <interface_name> <src_ip> <max_ports>")
         sys.exit(1)
     interface_name = sys.argv[1]
     src_ip = sys.argv[2]
+    max_ports = int(sys.argv[3])
     host = get_ip_address(interface_name)
     print(f"Server IP: {host}")
-    ports = read_port_info()["ports"]
-
-    if "--all-ports" in sys.argv:
-        ports = list(range(1, 65536))
-
+    ports = list(range(1, max_ports))
     start_server(ports, src_ip, host)
