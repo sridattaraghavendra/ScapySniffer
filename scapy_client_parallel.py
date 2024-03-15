@@ -135,9 +135,9 @@ def packet_to_object(packet):
 def send_packet(config, max_ports, destination):
     print(f"Sending packet to {destination}")
     send_icmp(destination, config)
-    with ThreadPoolExecutor(max_workers=100) as executor:
-        for port in range(1, max_ports + 1, 100):
-            print(f"Checking ports: {port}-{min(port+99, max_ports+1)}")
+    with ThreadPoolExecutor(max_workers=50) as executor:
+        for port in range(1, max_ports + 1, 50):
+            print(f"Checking ports: {port}-{min(port+49, max_ports+1)}")
             futures = []
             for p in range(port, min(port+50, 65536)):
                 futures.append(executor.submit(send_tcp, destination, p, config))
