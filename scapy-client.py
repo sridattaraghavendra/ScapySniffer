@@ -19,20 +19,8 @@ def send_tcp(target_ip, target_port, rule):
     # sniff(filter=f"tcp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, rule=rule)), timeout=2)
     reply = sr(tcp_packet,timeout=10)
     received_packets = reply[0]
-    for sent, received in received_packets:
-        print(sent.summary())
-        print(received.summary())
-        if received.haslayer(TCP):  # Now you can check if the received packet has a layer
-            print("Received TCP response")
-        else:
-            print("Received response without ICMP layer")
-    #print("TCP response : ",ans.show())
-    #print("Unanswered : ",unans.show())
-    # if response and isinstance(response, list) and len(response) > 0:
-    #     response_pkt = response[0][1]
-    #     handle_response_blocking(response_pkt, rule, tcp_packet)
-    # else:
-    #     print("No response received")
+    _, received = received_packets
+    handle_response_blocking(received[0], rule, tcp_packet)
 
 
 def send_udp(target_ip, target_port, rule):
@@ -40,16 +28,10 @@ def send_udp(target_ip, target_port, rule):
     # send(udp_packet)
 
     # sniff(filter=f"udp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, rule=rule)), timeout=2)
-    ans, unans = sr(udp_packet,timeout=10)
-    ans.show()
-    unans.show()
-    #print("UDP response : ",ans.show())
-    #print("Unanswered : ",unans.show())
-    # if response and isinstance(response, list) and len(response) > 0:
-    #     response_pkt = response[0][1]
-    #     handle_response_blocking(response_pkt, rule, udp_packet)
-    # else:
-    #     print("No response received")
+    reply = sr(udp_packet,timeout=10)
+    received_packets = reply[0]
+    _, received = received_packets
+    handle_response_blocking(received[0], rule, udp_packet)
 
 
 def send_icmp(target_ip, rule):
@@ -57,9 +39,11 @@ def send_icmp(target_ip, rule):
     # send(icmp_packet)
     
     # sniff(filter=f"icmp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, arg1=rule)), timeout=2)
-    ans, unans = sr(icmp_packet,timeout=10)
-    ans.show()
-    unans.show()
+    reply = sr(icmp_packet,timeout=10)
+    received_packets = reply[0]
+    _, received = received_packets
+    handle_response_blocking(received[0], rule, icmp_packet)
+
     #print("ICMP response : ",ans.show())
     #print("Unanswered : ",unans.show())
     # if response and isinstance(response, list) and len(response) > 0:
