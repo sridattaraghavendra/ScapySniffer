@@ -18,12 +18,11 @@ def send_tcp(target_ip, target_port, rule):
 
     # sniff(filter=f"tcp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, rule=rule)), timeout=2)
     reply = sr(tcp_packet,timeout=10)
-    print(reply[0].res[0].answer.haslayer(TCP))
     # print("Reply: ", reply)
     # sent, received = reply[0]
     # print("Sent: ", sent)
     # print("Received: ", received)
-#    handle_response_blocking(received[0], rule, tcp_packet)
+    handle_response_blocking(reply[0].res[0].answer, rule, tcp_packet)
 
 
 def send_udp(target_ip, target_port, rule):
@@ -32,9 +31,7 @@ def send_udp(target_ip, target_port, rule):
 
     # sniff(filter=f"udp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, rule=rule)), timeout=2)
     reply = sr(udp_packet,timeout=10)
-    received_packets = reply[0]
-    sent, received = received_packets
-    handle_response_blocking(received[0], rule, udp_packet)
+    handle_response_blocking(reply[0].res[0].answer, rule, udp_packet)
 
 
 def send_icmp(target_ip, rule):
@@ -43,9 +40,7 @@ def send_icmp(target_ip, rule):
     
     # sniff(filter=f"icmp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, arg1=rule)), timeout=2)
     reply = sr(icmp_packet,timeout=10)
-    received_packets = reply[0]
-    sent, received = received_packets
-    handle_response_blocking(received[0], rule, icmp_packet)
+    handle_response_blocking(reply[0].res[0].answer, rule, icmp_packet)
 
     #print("ICMP response : ",ans.show())
     #print("Unanswered : ",unans.show())
