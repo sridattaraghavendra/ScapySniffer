@@ -100,6 +100,6 @@ if __name__ == "__main__":
     ports = read_port_info()["ports"]
 
     if "--all-ports" in sys.argv:
-        ports = list(range(1, 65535))
+        ports = list(range(1, 65536))
 
     start_server(ports, src_ip, host)

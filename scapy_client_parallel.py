@@ -48,7 +48,6 @@ def filter_rule(config, protocol, port):
 
 def handle_response_blocking(packet, rule, sent_packet):
     if packet is None:
-        print("No expected reply received")
         match_rule_to_no_response(rule, sent_packet)
     else:
         if packet.haslayer(TCP) and packet[TCP].flags & 0x12:
@@ -66,8 +65,6 @@ def handle_response_blocking(packet, rule, sent_packet):
 
 def match_rule_to_reply(packet, rule):
     if rule is not None:
-        print(f"Response for rule: {rule['name']}")
-
         packet_details = packet_to_object(packet)
 
         if(packet_details["protocol"] == 6 and rule["ip_protocol"] == "tcp"):
@@ -81,15 +78,12 @@ def match_rule_to_reply(packet, rule):
 
         write_to_csv(packet_details)
     else:
-        print("No matching rule found")
         packet_details = packet_to_object(packet)
         packet_details["Test Result"] = "Failed"
         write_to_csv(packet_details)
 
 def match_rule_to_no_response(rule, packet):
     if rule is not None:
-        print(f"No response for rule: {rule['name']}")
-
         packet_details = packet_to_object(packet)
 
         if(packet_details["protocol"] == 6 and rule["ip_protocol"] == "tcp"):
@@ -103,7 +97,6 @@ def match_rule_to_no_response(rule, packet):
 
         write_to_csv(packet_details)
     else:
-        print("No matching rule found")
         packet_details = packet_to_object(packet)
         packet_details["Test Result"] = "Passed"
         write_to_csv(packet_details)
@@ -139,12 +132,12 @@ def packet_to_object(packet):
 
     return packet_details
 
-def send_packet(config, destination):
+def send_packet(config, max_ports, destination):
     print(f"Sending packet to {destination}")
     send_icmp(destination, config)
-    with ThreadPoolExecutor(max_workers=50) as executor:
-        for port in range(1, 65535, 50):
-            print(f"Checking ports: {port}-{min(port+49, 65535)}")
+    with ThreadPoolExecutor(max_workers=100) as executor:
+        for port in range(1, max_ports + 1, 100):
+            print(f"Checking ports: {port}-{min(port+99, max_ports+1)}")
             futures = []
             for p in range(port, min(port+50, 65536)):
                 futures.append(executor.submit(send_tcp, destination, p, config))
@@ -153,9 +146,10 @@ def send_packet(config, destination):
                 future.result()
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python scapy-client.py <destination>")
+    if len(sys.argv) < 3:
+        print("Usage: python scapy-client.py <destination> <max_ports>")
         sys.exit(1)
     destination = sys.argv[1]
+    max_ports = int(sys.argv[2])
     config = read_config()
-    send_packet(config, destination)
+    send_packet(config,max_ports, destination)
