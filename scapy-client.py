@@ -17,11 +17,9 @@ def send_tcp(target_ip, target_port, rule):
     # send(tcp_packet)
 
     # sniff(filter=f"tcp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, rule=rule)), timeout=2)
-    ans, unans = sr(tcp_packet,timeout=10)
-    if ans[0].haslayer(TCP) and ans[TCP].flags & 0x12:
-        print("Received TCP SYN-ACK reply from", ans[IP].src)
-    ans.show()
-    unans.show()
+    reply = sr(tcp_packet,timeout=10)
+    received_packets = reply[0]
+    print(received_packets)
     #print("TCP response : ",ans.show())
     #print("Unanswered : ",unans.show())
     # if response and isinstance(response, list) and len(response) > 0:
