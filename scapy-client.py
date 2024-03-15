@@ -20,7 +20,7 @@ def send_tcp(target_ip, target_port, rule):
     reply = sr(tcp_packet,timeout=10)
     received_packets = reply[0]
     for sent, received in received_packets:
-        if received.haslayer(TCP) and packet[TCP].flags & 0x12:  # Now you can check if the received packet has a layer
+        if received.haslayer(TCP):  # Now you can check if the received packet has a layer
             print("Received TCP response")
         else:
             print("Received response without ICMP layer")
