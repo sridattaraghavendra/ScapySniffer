@@ -18,10 +18,10 @@ def send_tcp(target_ip, target_port, rule):
 
     # sniff(filter=f"tcp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, rule=rule)), timeout=2)
     reply = sr(tcp_packet,timeout=10)
+    print("Reply: ", reply)
     received_packets = reply[0]
-    sent, received = received_packets
-    print(received)
-    handle_response_blocking(received[0], rule, tcp_packet)
+    print("Received: ", reply)
+#    handle_response_blocking(received[0], rule, tcp_packet)
 
 
 def send_udp(target_ip, target_port, rule):
