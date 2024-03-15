@@ -141,7 +141,9 @@ def send_packet(config, max_ports, destination):
             futures = []
             for p in range(port, min(port+50, 65536)):
                 futures.append(executor.submit(send_tcp, destination, p, config))
+                time.sleep(2)
                 futures.append(executor.submit(send_udp, destination, p, config))
+                time.sleep(2)
             for future in futures:
                 future.result()
 
