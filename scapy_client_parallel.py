@@ -51,8 +51,8 @@ def handle_response_blocking(packet, rule, sent_packet):
     if packet is None:
         match_rule_to_no_response(rule, sent_packet)
     else:
-        if packet.haslayer(TCP) and packet[TCP].flags & 0x12:
-            print("Received TCP SYN-ACK reply from", packet[IP].src)
+        if packet.haslayer(TCP):
+            print("Received TCP reply from", packet[IP].src)
             match_rule_to_reply(packet, rule)
         elif packet.haslayer(UDP):
             print("Received UDP reply from", packet[IP].src)
@@ -66,6 +66,7 @@ def handle_response_blocking(packet, rule, sent_packet):
 
 def match_rule_to_reply(packet, rule):
     if rule is not None:
+        print(f"Response for rule: {rule['name']}")
         packet_details = packet_to_object(packet)
 
         if(packet_details["protocol"] == 6 and rule["ip_protocol"] == "tcp"):
@@ -85,6 +86,8 @@ def match_rule_to_reply(packet, rule):
 
 def match_rule_to_no_response(rule, packet):
     if rule is not None:
+        print(f"No response for rule: {rule['name']}")
+
         packet_details = packet_to_object(packet)
 
         if(packet_details["protocol"] == 6 and rule["ip_protocol"] == "tcp"):
@@ -141,7 +144,7 @@ def send_packet(config, max_ports, destination):
             print(f"Checking ports: {port}-{min(port+49, max_ports+1)}")
             futures = []
             for p in range(port, min(port+50, 65536)):
-                futures.append(executor.submit(send_tcp, destination, p, config))
+                #futures.append(executor.submit(send_tcp, destination, p, config))
                 futures.append(executor.submit(send_udp, destination, p, config))
             for future in futures:
                 future.result()
