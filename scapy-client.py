@@ -20,6 +20,8 @@ def send_tcp(target_ip, target_port, rule):
     reply = sr(tcp_packet,timeout=10)
     received_packets = reply[0]
     for sent, received in received_packets:
+        print(sent.summary())
+        print(received.summary())
         if received.haslayer(TCP):  # Now you can check if the received packet has a layer
             print("Received TCP response")
         else:
