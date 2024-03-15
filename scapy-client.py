@@ -78,7 +78,11 @@ def match_rule_to_reply(packet,rule):
         packet_details["tcp_destination_port"] = packet[TCP].dport
         packet_details["tcp_flags"] = packet[TCP].flags
 
-    if(packet_details["protocol"].lower() == rule["ip_protocol"].lower()):
+    if(packet_details["protocol"] == 6 and rule["ip_protocol"] == "tcp"):
+        packet_details["Test Result"] = "Passed"
+    elif(packet_details["protocol"] == 17 and rule["ip_protocol"] == "udp"):
+        packet_details["Test Result"] = "Passed"
+    elif(packet_details["protocol"] == 1 and rule["ip_protocol"] == "icmp"):
         packet_details["Test Result"] = "Passed"
     else:
         packet_details["Test Result"] = "Failed"
@@ -92,7 +96,12 @@ def match_rule_to_no_response(rule):
     packet_details = {
         "timestamp": str(datetime.now())
     }
-    if(packet_details["protocol"].lower() == rule["ip_protocol"].lower()):
+    
+    if(packet_details["protocol"] == 6 and rule["ip_protocol"] == "tcp"):
+        packet_details["Test Result"] = "Failed"
+    elif(packet_details["protocol"] == 17 and rule["ip_protocol"] == "udp"):
+        packet_details["Test Result"] = "Failed"
+    elif(packet_details["protocol"] == 1 and rule["ip_protocol"] == "icmp"):
         packet_details["Test Result"] = "Failed"
     else:
         packet_details["Test Result"] = "Passed"
