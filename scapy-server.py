@@ -33,13 +33,13 @@ def handle_packet(packet):
 
     if packet.haslayer(TCP):
         handle_tcp(packet)
-        packet_details["tcp_source_port"] = packet[TCP].sport
-        packet_details["tcp_destination_port"] = packet[TCP].dport
-        packet_details["tcp_flags"] = packet[TCP].flags
+        packet_details["source_port"] = packet[TCP].sport
+        packet_details["destination_port"] = packet[TCP].dport
+        packet_details["flags"] = packet[TCP].flags
     elif packet.haslayer(UDP):
         handle_udp(packet)
-        packet_details["udp_source_port"] = packet[UDP].sport
-        packet_details["udp_destination_port"] = packet[UDP].dport
+        packet_details["source_port"] = packet[UDP].sport
+        packet_details["destination_port"] = packet[UDP].dport
     elif packet.haslayer(ICMP):
         handle_icmp(packet)
         packet_details["icmp_type"] = packet[ICMP].type
@@ -91,11 +91,15 @@ def start_server(ports, src_ip, host):
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("Usage: python scapy-server.py <interface_name> <src_ip>")
+        print("Usage: python scapy-server.py <interface_name> <src_ip> <--all-ports>")
         sys.exit(1)
     interface_name = sys.argv[1]
     src_ip = sys.argv[2]
     host = get_ip_address(interface_name)
     print(f"Server IP: {host}")
     ports = read_port_info()["ports"]
+
+    if "--all-ports" in sys.argv:
+        ports = list(range(1, 65535))
+
     start_server(ports, src_ip, host)

@@ -3,7 +3,6 @@
 from scapy.all import *
 import sys
 import json
-from functools import partial
 import csv
 
 def read_config():
@@ -11,11 +10,13 @@ def read_config():
         config = json.load(f)
     return config
 
-def send_tcp(target_ip, target_port, rule):
-    print(target_ip, target_port, rule)    
+def send_tcp(target_ip, target_port, config):
+    print(target_ip, target_port)    
     tcp_packet = IP(dst=target_ip) / TCP(dport=target_port, flags="S")
 
-    reply = sr(tcp_packet,timeout=10)
+    # filter rule from config if not None
+    rule = filter_rule(config, "tcp", target_port)
+    reply = sr(tcp_packet,timeout=5)
     if(len(reply[0].res) > 0):
         handle_response_blocking(reply[0].res[0].answer, rule, tcp_packet)
     else:
@@ -25,7 +26,8 @@ def send_tcp(target_ip, target_port, rule):
 def send_udp(target_ip, target_port, rule):
     udp_packet = IP(dst=target_ip) / UDP(dport=target_port)
 
-    reply = sr(udp_packet,timeout=10)
+    rule = filter_rule(config, "udp", target_port)
+    reply = sr(udp_packet,timeout=5)
     if(len(reply[0].res) > 0):
         handle_response_blocking(reply[0].res[0].answer, rule, udp_packet)
     else:
@@ -33,13 +35,18 @@ def send_udp(target_ip, target_port, rule):
 
 def send_icmp(target_ip, rule):
     icmp_packet = IP(dst=target_ip) / ICMP()
-    
-    reply = sr(icmp_packet,timeout=10)
+
+    rule = filter_rule(config, "icmp", None)
+    reply = sr(icmp_packet,timeout=5)
     if(len(reply[0].res) > 0):
         handle_response_blocking(reply[0].res[0].answer, rule, icmp_packet)
     else:
         handle_response_blocking(None, rule, icmp_packet)
 
+def filter_rule(config, protocol, port):
+    for rule in config['firewall_rules']:
+        if rule['ip_protocol'] == protocol and (rule['port'] == port or port == None):
+            return rule
 
 def handle_response_blocking(packet, rule, sent_packet):
     if packet is None:
@@ -60,37 +67,49 @@ def handle_response_blocking(packet, rule, sent_packet):
             match_rule_to_no_response(rule, sent_packet)
 
 def match_rule_to_reply(packet,rule):
-    print(f"Response for rule: {rule['name']}")
+    if rule is not None:
+        print(f"Response for rule: {rule['name']}")
 
-    packet_details = packet_to_object(packet)
-    
-    if(packet_details["protocol"] == 6 and rule["ip_protocol"] == "tcp"):
-        packet_details["Test Result"] = "Passed"
-    elif(packet_details["protocol"] == 17 and rule["ip_protocol"] == "udp"):
-        packet_details["Test Result"] = "Passed"
-    elif(packet_details["protocol"] == 1 and rule["ip_protocol"] == "icmp"):
-        packet_details["Test Result"] = "Passed"
+        packet_details = packet_to_object(packet)
+        
+        if(packet_details["protocol"] == 6 and rule["ip_protocol"] == "tcp"):
+            packet_details["Test Result"] = "Passed"
+        elif(packet_details["protocol"] == 17 and rule["ip_protocol"] == "udp"):
+            packet_details["Test Result"] = "Passed"
+        elif(packet_details["protocol"] == 1 and rule["ip_protocol"] == "icmp"):
+            packet_details["Test Result"] = "Passed"
+        else:
+            packet_details["Test Result"] = "Failed"
+        
+        write_to_csv(packet_details)
     else:
+        print("No matching rule found")
+        packet_details = packet_to_object(packet)
         packet_details["Test Result"] = "Failed"
-    
-    write_to_csv(packet_details)
+        write_to_csv(packet_details)
 
     
 def match_rule_to_no_response(rule, packet):
-    print(f"No response for rule: {rule['name']}")
+    if rule is not None:
+        print(f"No response for rule: {rule['name']}")
 
-    packet_details = packet_to_object(packet)
-    
-    if(packet_details["protocol"] == 6 and rule["ip_protocol"] == "tcp"):
-        packet_details["Test Result"] = "Failed"
-    elif(packet_details["protocol"] == 17 and rule["ip_protocol"] == "udp"):
-        packet_details["Test Result"] = "Failed"
-    elif(packet_details["protocol"] == 1 and rule["ip_protocol"] == "icmp"):
-        packet_details["Test Result"] = "Failed"
+        packet_details = packet_to_object(packet)
+        
+        if(packet_details["protocol"] == 6 and rule["ip_protocol"] == "tcp"):
+            packet_details["Test Result"] = "Failed"
+        elif(packet_details["protocol"] == 17 and rule["ip_protocol"] == "udp"):
+            packet_details["Test Result"] = "Failed"
+        elif(packet_details["protocol"] == 1 and rule["ip_protocol"] == "icmp"):
+            packet_details["Test Result"] = "Failed"
+        else:
+            packet_details["Test Result"] = "Passed"
+        
+        write_to_csv(packet_details)
     else:
+        print("No matching rule found")
+        packet_details = packet_to_object(packet)
         packet_details["Test Result"] = "Passed"
-    
-    write_to_csv(packet_details)
+        write_to_csv(packet_details)
 
 def write_to_csv(packet_details):
     with open("test_results.csv", "a", newline="") as csv_file:
@@ -114,27 +133,32 @@ def packet_to_object(packet):
         packet_details["icmp_code"] = packet[ICMP].code
 
     elif packet.haslayer(UDP):
-        packet_details["udp_source_port"] = packet[UDP].sport
-        packet_details["udp_destination_port"] = packet[UDP].dport
+        packet_details["source_port"] = packet[UDP].sport
+        packet_details["destination_port"] = packet[UDP].dport
 
     elif packet.haslayer(TCP):
-        packet_details["tcp_source_port"] = packet[TCP].sport
-        packet_details["tcp_destination_port"] = packet[TCP].dport
-        packet_details["tcp_flags"] = packet[TCP].flags
+        packet_details["source_port"] = packet[TCP].sport
+        packet_details["destination_port"] = packet[TCP].dport
+        packet_details["flags"] = packet[TCP].flags
 
     return packet_details
 
 
 def send_packet(config, destination):
     print(f"Sending packet to {destination}")
-    for rule in config['firewall_rules']:
-        print(f'Checking rule: {rule["name"]}')
-        print(f"Allowed Protocol: {rule['ip_protocol']}")
-        print(f"Allowed Port Range: {rule['from_port']}-{rule['to_port']}")
-        for port in range(rule['from_port'], rule['to_port'] + 1):
-            send_tcp(destination, port, rule)
-            send_udp(destination, port, rule)
-            send_icmp(destination, rule)
+    send_icmp(destination, config)
+    for port in range(1, 65535):
+        print(f"Checking port: {port}")
+        send_tcp(destination, port, config)
+        send_udp(destination, port, config)
+    # for rule in config['firewall_rules']:
+    #     print(f'Checking rule: {rule["name"]}')
+    #     print(f"Allowed Protocol: {rule['ip_protocol']}")
+    #     print(f"Allowed Port Range: {rule['from_port']}-{rule['to_port']}")
+    #     for port in range(rule['from_port'], rule['to_port'] + 1):
+    #         send_tcp(destination, port, rule)
+    #         send_udp(destination, port, rule)
+    #         send_icmp(destination, rule)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
