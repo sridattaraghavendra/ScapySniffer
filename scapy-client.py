@@ -18,7 +18,7 @@ def send_tcp(target_ip, target_port, rule):
 
     # sniff(filter=f"tcp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, rule=rule)), timeout=2)
     reply = sr(tcp_packet,timeout=10)
-    print(type(reply[0].res))
+    print(reply[0].res[0])
     # print("Reply: ", reply)
     # sent, received = reply[0]
     # print("Sent: ", sent)
