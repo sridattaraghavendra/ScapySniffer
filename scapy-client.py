@@ -18,8 +18,8 @@ def send_tcp(target_ip, target_port, rule):
 
     # sniff(filter=f"tcp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, rule=rule)), timeout=2)
     ans, unans = sr(tcp_packet,timeout=10)
-    print("TCP response : " ,ans)
-    print("Unanswered : " ,unans)
+    print("TCP response : ",ans)
+    print("Unanswered : ",unans)
     # if response and isinstance(response, list) and len(response) > 0:
     #     response_pkt = response[0][1]
     #     handle_response_blocking(response_pkt, rule, tcp_packet)
@@ -32,13 +32,14 @@ def send_udp(target_ip, target_port, rule):
     # send(udp_packet)
 
     # sniff(filter=f"udp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, rule=rule)), timeout=2)
-    response = sr(udp_packet,timeout=10)
-    print("UDP response : " ,response)
-    if response and isinstance(response, list) and len(response) > 0:
-        response_pkt = response[0][1]
-        handle_response_blocking(response_pkt, rule, udp_packet)
-    else:
-        print("No response received")
+    ans, unans = sr(udp_packet,timeout=10)
+    print("UDP response : ",ans)
+    print("Unanswered : ",unans)
+    # if response and isinstance(response, list) and len(response) > 0:
+    #     response_pkt = response[0][1]
+    #     handle_response_blocking(response_pkt, rule, udp_packet)
+    # else:
+    #     print("No response received")
 
 
 def send_icmp(target_ip, rule):
@@ -46,13 +47,14 @@ def send_icmp(target_ip, rule):
     # send(icmp_packet)
     
     # sniff(filter=f"icmp and src host {target_ip}", prn=handle_response(partial(match_rule_to_reply, arg1=rule)), timeout=2)
-    response = sr(icmp_packet,timeout=10)
-    print("ICMP response : " ,response)
-    if response and isinstance(response, list) and len(response) > 0:
-        response_pkt = response[0][1]
-        handle_response_blocking(response_pkt, rule, icmp_packet)
-    else:
-        print("No response received")
+    ans, unans = sr(icmp_packet,timeout=10)
+    print("ICMP response : ",ans)
+    print("Unanswered : ",unans)
+    # if response and isinstance(response, list) and len(response) > 0:
+    #     response_pkt = response[0][1]
+    #     handle_response_blocking(response_pkt, rule, icmp_packet)
+    # else:
+    #     print("No response received")
 
 
 def handle_response_blocking(packet, rule, sent_packet):
@@ -164,7 +166,7 @@ def send_packet(config, destination):
         print(f"Allowed Port Range: {rule['from_port']}-{rule['to_port']}")
         for port in range(rule['from_port'], rule['to_port'] + 1):
             send_tcp(destination, port, rule)
-            #send_udp(destination, port, rule)
+            send_udp(destination, port, rule)
             #send_icmp(destination, rule)
 
 if __name__ == "__main__":
